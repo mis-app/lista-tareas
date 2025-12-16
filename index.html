@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Tareas - App Web</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-tasks"></i> Mi Lista de Tareas</h1>
+            <p class="subtitle">Organiza tu día de manera eficiente</p>
+        </header>
+
+        <div class="app-card">
+            <div class="input-section">
+                <div class="input-group">
+                    <input type="text" id="taskInput" placeholder="Escribe una nueva tarea..." maxlength="100">
+                    <select id="prioritySelect">
+                        <option value="normal">Normal</option>
+                        <option value="alta">Alta</option>
+                        <option value="urgente">Urgente</option>
+                    </select>
+                    <button id="addTaskBtn" class="btn-primary">
+                        <i class="fas fa-plus"></i> Agregar
+                    </button>
+                </div>
+            </div>
+
+            <div class="stats-section">
+                <div class="stat-card">
+                    <h3><i class="fas fa-list-check"></i> Total</h3>
+                    <p id="totalTasks">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3><i class="fas fa-check-circle"></i> Completadas</h3>
+                    <p id="completedTasks">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3><i class="fas fa-clock"></i> Pendientes</h3>
+                    <p id="pendingTasks">0</p>
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <button class="filter-btn active" data-filter="all">Todas</button>
+                <button class="filter-btn" data-filter="pending">Pendientes</button>
+                <button class="filter-btn" data-filter="completed">Completadas</button>
+            </div>
+
+            <div class="tasks-section">
+                <ul id="taskList">
+                    <!-- Las tareas se agregarán aquí dinámicamente -->
+                </ul>
+            </div>
+
+            <div class="action-section">
+                <button id="clearCompletedBtn" class="btn-secondary">
+                    <i class="fas fa-trash"></i> Limpiar Completadas
+                </button>
+                <button id="saveTasksBtn" class="btn-success">
+                    <i class="fas fa-save"></i> Guardar Tareas
+                </button>
+            </div>
+        </div>
+
+        <footer>
+            <p>Aplicación web creada con HTML, CSS y JavaScript</p>
+            <p class="hint">Las tareas se guardan automáticamente en tu navegador</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
