@@ -9,6 +9,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const pendingTasks = document.getElementById('pendingTasks');
     const clearCompletedBtn = document.getElementById('clearCompletedBtn');
     const saveTasksBtn = document.getElementById('saveTasksBtn');
+    const exportExcelBtn = document.getElementById('exportExcelBtn');
+    const exportTasksBtn = document.getElementById('exportTasksBtn');
     const filterButtons = document.querySelectorAll('.filter-btn');
     
     // Cargar tareas desde localStorage
@@ -50,6 +52,12 @@ document.addEventListener('DOMContentLoaded', function() {
         saveTasks();
         showNotification('Tareas guardadas exitosamente', 'success');
     });
+    
+    // Exportar a Excel - Botón en estadísticas
+    exportExcelBtn.addEventListener('click', exportToExcel);
+    
+    // Exportar a Excel - Botón en acciones
+    exportTasksBtn.addEventListener('click', exportToExcel);
     
     // Función para agregar tarea
     function addTask() {
@@ -111,7 +119,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Ordenar tareas: urgentes primero, luego completadas al final
         filteredTasks.sort((a, b) => {
             // Ordenar por prioridad
-            const priorityOrder = {urgent: 0, alta: 1, normal: 2};
+            const priorityOrder = {urgente: 0, alta: 1, normal: 2};
             if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
                 return priorityOrder[a.priority] - priorityOrder[b.priority];
             }
@@ -132,7 +140,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const priorityText = {
                 normal: 'Normal',
                 alta: 'Alta',
-                urgent: 'Urgente'
+                urgente: 'Urgente'
             }[task.priority];
             
             taskItem.innerHTML = `
@@ -201,6 +209,96 @@ document.addEventListener('DOMContentLoaded', function() {
     function saveTasks() {
         localStorage.setItem('tasks', JSON.stringify(tasks));
         updateStats();
+    }
+    
+    // Función para exportar tareas a Excel
+    function exportToExcel() {
+        if (tasks.length === 0) {
+            showNotification('No hay tareas para exportar', 'error');
+            return;
+        }
+        
+        // Preparar los datos para Excel
+        const excelData = tasks.map(task => {
+            // Formatear fecha
+            const date = new Date(task.createdAt);
+            const formattedDate = date.toLocaleDateString('es-ES', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            // Convertir prioridad a texto completo
+            const priorityText = {
+                normal: 'Normal',
+                alta: 'Alta',
+                urgente: 'Urgente'
+            }[task.priority];
+            
+            // Convertir estado a texto
+            const statusText = task.completed ? 'Completada' : 'Pendiente';
+            
+            return {
+                'ID': task.id,
+                'Tarea': task.text,
+                'Prioridad': priorityText,
+                'Estado': statusText,
+                'Fecha de Creación': formattedDate
+            };
+        });
+        
+        // Crear hoja de trabajo
+        const worksheet = XLSX.utils.json_to_sheet(excelData);
+        
+        // Ajustar el ancho de las columnas
+        const columnWidths = [
+            { wch: 10 }, // ID
+            { wch: 40 }, // Tarea
+            { wch: 12 }, // Prioridad
+            { wch: 12 }, // Estado
+            { wch: 20 }  // Fecha de Creación
+        ];
+        worksheet['!cols'] = columnWidths;
+        
+        // Crear libro de trabajo
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Tareas');
+        
+        // Agregar hoja con estadísticas
+        const statsData = [
+            ['ESTADÍSTICAS', ''],
+            ['Total de Tareas', tasks.length],
+            ['Tareas Completadas', tasks.filter(t => t.completed).length],
+            ['Tareas Pendientes', tasks.filter(t => !t.completed).length],
+            ['', ''],
+            ['Fecha de Exportación', new Date().toLocaleDateString('es-ES')]
+        ];
+        
+        const statsWorksheet = XLSX.utils.aoa_to_sheet(statsData);
+        XLSX.utils.book_append_sheet(workbook, statsWorksheet, 'Estadísticas');
+        
+        // Generar el archivo Excel
+        const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+        
+        // Descargar el archivo
+        const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        
+        // Nombre del archivo con fecha actual
+        const date = new Date();
+        const dateStr = date.toISOString().split('T')[0];
+        link.download = `lista_tareas_${dateStr}.xlsx`;
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        
+        showNotification(`Se exportaron ${tasks.length} tareas a Excel`, 'success');
     }
     
     // Función para mostrar notificaciones
@@ -273,7 +371,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (tasks.length === 0) {
         tasks = [
             {id: 1, text: 'Aprender JavaScript', priority: 'alta', completed: true, createdAt: new Date().toISOString()},
-            {id: 2, text: 'Crear aplicación web', priority: 'urgent', completed: false, createdAt: new Date().toISOString()},
+            {id: 2, text: 'Crear aplicación web', priority: 'urgente', completed: false, createdAt: new Date().toISOString()},
             {id: 3, text: 'Diseñar interfaz responsive', priority: 'normal', completed: false, createdAt: new Date().toISOString()},
             {id: 4, text: 'Probar la aplicación', priority: 'alta', completed: false, createdAt: new Date().toISOString()}
         ];

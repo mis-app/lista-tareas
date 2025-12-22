@@ -133,6 +133,28 @@ header h1 {
     color: #2575fc;
 }
 
+.export-btn {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background-color 0.3s, transform 0.2s;
+    width: 100%;
+    margin-top: 5px;
+}
+
+.export-btn:hover {
+    background: #218838;
+    transform: translateY(-2px);
+}
+
 .filter-section {
     display: flex;
     gap: 10px;
@@ -287,12 +309,31 @@ header h1 {
     transition: background-color 0.3s;
 }
 
+.btn-excel {
+    padding: 15px 25px;
+    background: #1d6f42;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
 .btn-secondary:hover {
     background: #5a6268;
 }
 
 .btn-success:hover {
     background: #218838;
+}
+
+.btn-excel:hover {
+    background: #155d33;
+    transform: translateY(-2px);
 }
 
 footer {
@@ -327,5 +368,9 @@ footer {
     
     .action-section {
         flex-direction: column;
+    }
+    
+    .stats-section {
+        grid-template-columns: repeat(2, 1fr);
     }
 }
