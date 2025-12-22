@@ -133,21 +133,40 @@ header h1 {
     color: #2575fc;
 }
 
-.export-btn {
-    background: #28a745;
-    color: white;
+.excel-buttons {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.import-btn, .export-btn {
+    flex: 1;
+    padding: 8px 12px;
     border: none;
-    padding: 10px 15px;
-    border-radius: 8px;
-    font-size: 0.9rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    transition: background-color 0.3s, transform 0.2s;
-    width: 100%;
-    margin-top: 5px;
+    gap: 5px;
+    transition: all 0.3s;
+    font-weight: 500;
+}
+
+.import-btn {
+    background: #007bff;
+    color: white;
+}
+
+.export-btn {
+    background: #28a745;
+    color: white;
+}
+
+.import-btn:hover {
+    background: #0056b3;
+    transform: translateY(-2px);
 }
 
 .export-btn:hover {
@@ -309,8 +328,13 @@ header h1 {
     transition: background-color 0.3s;
 }
 
+.excel-actions {
+    display: flex;
+    gap: 10px;
+}
+
 .btn-excel {
-    padding: 15px 25px;
+    padding: 15px 20px;
     background: #1d6f42;
     color: white;
     border: none;
@@ -321,6 +345,10 @@ header h1 {
     align-items: center;
     gap: 10px;
     transition: background-color 0.3s, transform 0.2s;
+}
+
+.btn-excel-import {
+    background: #007bff;
 }
 
 .btn-secondary:hover {
@@ -334,6 +362,102 @@ header h1 {
 .btn-excel:hover {
     background: #155d33;
     transform: translateY(-2px);
+}
+
+.btn-excel-import:hover {
+    background: #0056b3;
+    transform: translateY(-2px);
+}
+
+/* Modal para opciones de importación */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background-color: white;
+    padding: 30px;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.modal h2 {
+    margin-bottom: 20px;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.modal-options {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.modal-option {
+    padding: 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.modal-option:hover {
+    border-color: #2575fc;
+    background-color: #f8f9ff;
+}
+
+.modal-option i {
+    font-size: 1.5rem;
+    color: #2575fc;
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.modal-btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.modal-btn-cancel {
+    background: #6c757d;
+    color: white;
+}
+
+.modal-btn-confirm {
+    background: #28a745;
+    color: white;
+}
+
+.modal-btn-cancel:hover {
+    background: #5a6268;
+}
+
+.modal-btn-confirm:hover {
+    background: #218838;
 }
 
 footer {
@@ -370,7 +494,16 @@ footer {
         flex-direction: column;
     }
     
+    .excel-actions {
+        width: 100%;
+        flex-direction: column;
+    }
+    
     .stats-section {
         grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .excel-buttons {
+        flex-direction: column;
     }
 }

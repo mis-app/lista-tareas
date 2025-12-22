@@ -9,9 +9,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const pendingTasks = document.getElementById('pendingTasks');
     const clearCompletedBtn = document.getElementById('clearCompletedBtn');
     const saveTasksBtn = document.getElementById('saveTasksBtn');
+    const importExcelBtn = document.getElementById('importExcelBtn');
     const exportExcelBtn = document.getElementById('exportExcelBtn');
+    const importTasksBtn = document.getElementById('importTasksBtn');
     const exportTasksBtn = document.getElementById('exportTasksBtn');
     const filterButtons = document.querySelectorAll('.filter-btn');
+    const fileInput = document.getElementById('fileInput');
+    
+    // Variables para importación
+    let importMode = 'replace'; // 'replace', 'merge', 'add'
     
     // Cargar tareas desde localStorage
     let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
@@ -53,11 +59,300 @@ document.addEventListener('DOMContentLoaded', function() {
         showNotification('Tareas guardadas exitosamente', 'success');
     });
     
-    // Exportar a Excel - Botón en estadísticas
+    // Exportar a Excel
     exportExcelBtn.addEventListener('click', exportToExcel);
-    
-    // Exportar a Excel - Botón en acciones
     exportTasksBtn.addEventListener('click', exportToExcel);
+    
+    // Importar desde Excel
+    importExcelBtn.addEventListener('click', showImportModal);
+    importTasksBtn.addEventListener('click', showImportModal);
+    
+    // Manejar selección de archivo
+    fileInput.addEventListener('change', handleFileSelect);
+    
+    // Función para mostrar modal de importación
+    function showImportModal() {
+        // Crear modal si no existe
+        let modal = document.getElementById('importModal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'importModal';
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <h2><i class="fas fa-file-import"></i> Importar desde Excel</h2>
+                    <p>Selecciona cómo quieres importar las tareas:</p>
+                    
+                    <div class="modal-options">
+                        <div class="modal-option" data-mode="replace">
+                            <i class="fas fa-sync-alt"></i>
+                            <div>
+                                <h3>Reemplazar todo</h3>
+                                <p>Elimina todas las tareas actuales y carga las del archivo Excel</p>
+                            </div>
+                        </div>
+                        
+                        <div class="modal-option" data-mode="merge">
+                            <i class="fas fa-blender"></i>
+                            <div>
+                                <h3>Combinar</h3>
+                                <p>Mantiene las tareas actuales y añade las del archivo (sin duplicados)</p>
+                            </div>
+                        </div>
+                        
+                        <div class="modal-option" data-mode="add">
+                            <i class="fas fa-plus-circle"></i>
+                            <div>
+                                <h3>Añadir nuevas</h3>
+                                <p>Añade todas las tareas del archivo Excel a las existentes</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-buttons">
+                        <button class="modal-btn modal-btn-cancel" id="cancelImportBtn">Cancelar</button>
+                        <button class="modal-btn modal-btn-confirm" id="confirmImportBtn" disabled>
+                            <i class="fas fa-file-import"></i> Seleccionar Archivo
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            // Agregar event listeners a las opciones
+            const options = modal.querySelectorAll('.modal-option');
+            options.forEach(option => {
+                option.addEventListener('click', function() {
+                    // Remover selección de todas las opciones
+                    options.forEach(opt => opt.style.borderColor = '#e0e0e0');
+                    // Seleccionar esta opción
+                    this.style.borderColor = '#2575fc';
+                    importMode = this.getAttribute('data-mode');
+                    modal.querySelector('#confirmImportBtn').disabled = false;
+                });
+            });
+            
+            // Botón cancelar
+            modal.querySelector('#cancelImportBtn').addEventListener('click', function() {
+                modal.style.display = 'none';
+            });
+            
+            // Botón confirmar
+            modal.querySelector('#confirmImportBtn').addEventListener('click', function() {
+                modal.style.display = 'none';
+                fileInput.click();
+            });
+            
+            // Cerrar modal al hacer clic fuera
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        }
+        
+        // Mostrar modal
+        modal.style.display = 'flex';
+    }
+    
+    // Función para manejar selección de archivo
+    function handleFileSelect(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        // Verificar extensión
+        const fileName = file.name.toLowerCase();
+        if (!fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
+            showNotification('Por favor, selecciona un archivo Excel (.xlsx o .xls)', 'error');
+            fileInput.value = '';
+            return;
+        }
+        
+        const reader = new FileReader();
+        
+        reader.onload = function(event) {
+            try {
+                const data = new Uint8Array(event.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                
+                // Obtener la primera hoja
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const excelData = XLSX.utils.sheet_to_json(firstSheet);
+                
+                // Procesar datos del Excel
+                processImportedData(excelData, file.name);
+                
+                // Limpiar input file
+                fileInput.value = '';
+            } catch (error) {
+                console.error('Error al leer el archivo Excel:', error);
+                showNotification('Error al leer el archivo Excel. Verifica el formato.', 'error');
+                fileInput.value = '';
+            }
+        };
+        
+        reader.onerror = function() {
+            showNotification('Error al leer el archivo', 'error');
+            fileInput.value = '';
+        };
+        
+        reader.readAsArrayBuffer(file);
+    }
+    
+    // Función para procesar datos importados
+    function processImportedData(excelData, fileName) {
+        if (!excelData || excelData.length === 0) {
+            showNotification('El archivo Excel no contiene datos válidos', 'error');
+            return;
+        }
+        
+        const importedTasks = [];
+        let skippedTasks = 0;
+        
+        // Procesar cada fila del Excel
+        excelData.forEach((row, index) => {
+            // Validar datos mínimos
+            if (!row.Tarea || row.Tarea.trim() === '') {
+                skippedTasks++;
+                return;
+            }
+            
+            // Convertir prioridad de texto a valor interno
+            let priority = 'normal';
+            if (row.Prioridad) {
+                const prioridad = row.Prioridad.toLowerCase();
+                if (prioridad.includes('alta') || prioridad.includes('high')) priority = 'alta';
+                else if (prioridad.includes('urgente') || prioridad.includes('urgent')) priority = 'urgente';
+            }
+            
+            // Convertir estado de texto a booleano
+            let completed = false;
+            if (row.Estado) {
+                const estado = row.Estado.toLowerCase();
+                if (estado.includes('completada') || estado.includes('completed') || 
+                    estado.includes('terminada') || estado.includes('done')) {
+                    completed = true;
+                }
+            }
+            
+            // Generar nuevo ID para evitar conflictos
+            const newId = Date.now() + index;
+            
+            // Intentar parsear fecha o usar fecha actual
+            let createdAt = new Date().toISOString();
+            if (row['Fecha de Creación']) {
+                try {
+                    const parsedDate = new Date(row['Fecha de Creación']);
+                    if (!isNaN(parsedDate.getTime())) {
+                        createdAt = parsedDate.toISOString();
+                    }
+                } catch (e) {
+                    // Usar fecha actual si hay error
+                }
+            }
+            
+            // Crear objeto de tarea
+            const task = {
+                id: newId,
+                text: row.Tarea.trim(),
+                priority: priority,
+                completed: completed,
+                createdAt: createdAt,
+                imported: true,
+                originalId: row.ID || null
+            };
+            
+            importedTasks.push(task);
+        });
+        
+        // Aplicar el modo de importación seleccionado
+        let message = '';
+        let taskCount = 0;
+        
+        switch(importMode) {
+            case 'replace':
+                tasks = importedTasks;
+                message = `Todas las tareas reemplazadas. ${importedTasks.length} tareas importadas.`;
+                taskCount = importedTasks.length;
+                break;
+                
+            case 'merge':
+                // Filtrar tareas duplicadas (mismo texto)
+                const existingTexts = new Set(tasks.map(t => t.text.toLowerCase()));
+                const newTasks = importedTasks.filter(t => !existingTexts.has(t.text.toLowerCase()));
+                
+                tasks = [...tasks, ...newTasks];
+                message = `${newTasks.length} nuevas tareas añadidas (${skippedTasks + importedTasks.length - newTasks.length} duplicadas omitidas).`;
+                taskCount = newTasks.length;
+                break;
+                
+            case 'add':
+                tasks = [...tasks, ...importedTasks];
+                message = `${importedTasks.length} tareas añadidas.`;
+                taskCount = importedTasks.length;
+                break;
+        }
+        
+        // Guardar y renderizar
+        saveTasks();
+        renderTasks();
+        
+        // Mostrar resumen de importación
+        showImportSummary(message, taskCount, skippedTasks, fileName);
+    }
+    
+    // Función para mostrar resumen de importación
+    function showImportSummary(message, importedCount, skippedCount, fileName) {
+        const summaryModal = document.createElement('div');
+        summaryModal.className = 'modal';
+        summaryModal.style.display = 'flex';
+        summaryModal.innerHTML = `
+            <div class="modal-content">
+                <h2><i class="fas fa-check-circle" style="color: #28a745;"></i> Importación Completada</h2>
+                
+                <div style="margin: 20px 0;">
+                    <p><strong>Archivo:</strong> ${fileName}</p>
+                    <p><strong>Modo:</strong> ${getImportModeName(importMode)}</p>
+                    <p><strong>Tareas importadas:</strong> ${importedCount}</p>
+                    ${skippedCount > 0 ? `<p><strong>Filas omitidas:</strong> ${skippedCount}</p>` : ''}
+                    <p><strong>Total de tareas ahora:</strong> ${tasks.length}</p>
+                </div>
+                
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin: 20px 0;">
+                    <p style="margin: 0; color: #333;">${message}</p>
+                </div>
+                
+                <div class="modal-buttons">
+                    <button class="modal-btn modal-btn-confirm" id="closeSummaryBtn">
+                        <i class="fas fa-check"></i> Aceptar
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(summaryModal);
+        
+        // Cerrar modal
+        summaryModal.querySelector('#closeSummaryBtn').addEventListener('click', function() {
+            summaryModal.remove();
+        });
+        
+        summaryModal.addEventListener('click', function(e) {
+            if (e.target === summaryModal) {
+                summaryModal.remove();
+            }
+        });
+    }
+    
+    // Función para obtener nombre del modo de importación
+    function getImportModeName(mode) {
+        const names = {
+            'replace': 'Reemplazar todo',
+            'merge': 'Combinar',
+            'add': 'Añadir nuevas'
+        };
+        return names[mode] || mode;
+    }
     
     // Función para agregar tarea
     function addTask() {
@@ -143,9 +438,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 urgente: 'Urgente'
             }[task.priority];
             
+            // Agregar indicador de tarea importada
+            const importIndicator = task.imported ? 
+                '<span class="imported-indicator" title="Importada desde Excel"><i class="fas fa-file-import"></i></span>' : '';
+            
             taskItem.innerHTML = `
                 <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''} data-id="${task.id}">
                 <span class="task-text">${escapeHTML(task.text)}</span>
+                ${importIndicator}
                 <span class="task-priority priority-${task.priority}">${priorityText}</span>
                 <button class="delete-task" data-id="${task.id}">
                     <i class="fas fa-trash"></i>

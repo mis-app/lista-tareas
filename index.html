@@ -6,7 +6,7 @@
     <title>Lista de Tareas - App Web</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Librería SheetJS para exportar a Excel -->
+    <!-- Librería SheetJS para importar/exportar a Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
@@ -45,10 +45,15 @@
                     <p id="pendingTasks">0</p>
                 </div>
                 <div class="stat-card">
-                    <h3><i class="fas fa-file-excel"></i> Exportar</h3>
-                    <button id="exportExcelBtn" class="export-btn">
-                        <i class="fas fa-download"></i> Excel
-                    </button>
+                    <h3><i class="fas fa-file-excel"></i> Excel</h3>
+                    <div class="excel-buttons">
+                        <button id="importExcelBtn" class="import-btn" title="Importar desde Excel">
+                            <i class="fas fa-upload"></i> Importar
+                        </button>
+                        <button id="exportExcelBtn" class="export-btn" title="Exportar a Excel">
+                            <i class="fas fa-download"></i> Exportar
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -71,17 +76,25 @@
                 <button id="saveTasksBtn" class="btn-success">
                     <i class="fas fa-save"></i> Guardar Tareas
                 </button>
-                <button id="exportTasksBtn" class="btn-excel">
-                    <i class="fas fa-file-excel"></i> Exportar a Excel
-                </button>
+                <div class="excel-actions">
+                    <button id="importTasksBtn" class="btn-excel btn-excel-import">
+                        <i class="fas fa-file-import"></i> Importar Excel
+                    </button>
+                    <button id="exportTasksBtn" class="btn-excel">
+                        <i class="fas fa-file-export"></i> Exportar Excel
+                    </button>
+                </div>
             </div>
         </div>
 
         <footer>
             <p>Aplicación web creada con HTML, CSS y JavaScript</p>
-            <p class="hint">Las tareas se guardan automáticamente en tu navegador | Puedes exportarlas a Excel</p>
+            <p class="hint">Las tareas se guardan automáticamente en tu navegador | Importa/Exporta desde Excel</p>
         </footer>
     </div>
+
+    <!-- Input oculto para importar archivos -->
+    <input type="file" id="fileInput" accept=".xlsx, .xls" style="display: none;">
 
     <script src="script.js"></script>
 </body>
